@@ -86,6 +86,8 @@ struct LoginView: View {
             }
             .padding(.horizontal, 16)
             .padding(.top, 63)
+            .disabled(email.isEmpty || password.isEmpty)
+            .opacity(email.isEmpty || password.isEmpty ? 0.5 : 1)
             
             Spacer()
         }
