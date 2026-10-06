@@ -10,6 +10,7 @@ import SwiftUI
 struct LoginView: View {
     @State private var email = ""
     @State private var password = ""
+    @State private var keepLogin = false
 
     var body: some View {
         
@@ -45,7 +46,6 @@ struct LoginView: View {
                         RoundedRectangle(cornerRadius: 5)
                             .stroke(.gray200, lineWidth: 0.5)
                     }
-                    .padding(.horizontal, 16)
                 
                 SecureField(
                     "비밀번호",
@@ -68,8 +68,14 @@ struct LoginView: View {
                         RoundedRectangle(cornerRadius: 5)
                             .stroke(.gray200, lineWidth: 0.5)
                     }
-                    .padding(.horizontal, 16)
+                
+                Toggle("로그인 상태 유지", isOn: $keepLogin)
+                    .font(.system(size: 14, weight: .regular))
+                    .foregroundStyle(.instaBlack)
+                    .tint(.primaryBlue)
+                    .padding(.top, 10)
             }
+            .padding(.horizontal, 16)
             
             Button {
                 // login
