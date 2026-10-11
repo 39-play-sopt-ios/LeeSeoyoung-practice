@@ -16,7 +16,7 @@ struct InstagramFeedView: View {
                 Image(.instagramLogo)
                 
                 ForEach($posts) { $post in
-                    FeedView(isLiked: $post.isLiked,
+                    PostView(isLiked: $post.isLiked,
                              profileImage: Image(post.postImageName),
                              username: post.username,
                              location: post.location,

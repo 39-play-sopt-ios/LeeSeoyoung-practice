@@ -1,5 +1,5 @@
 //
-//  FeedView.swift
+//  PostView.swift
 //  SOPT39-Seminar
 //
 //  Created by Seoyoung Lee on 10/10/26.
@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-struct FeedView: View {
+struct PostView: View {
     @Binding var isLiked: Bool
     let profileImage: Image
     let username: String
