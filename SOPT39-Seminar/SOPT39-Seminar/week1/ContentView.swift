@@ -35,7 +35,7 @@ struct ContentView: View {
                 .padding(.horizontal, 34)
                 
                 Button {
-                    // acount change
+                    // account change
                 } label: {
                     Text("계정 전환")
                         .font(.system(size: 14, weight: .bold))
