@@ -10,14 +10,23 @@ import SwiftUI
 struct CustomInputField: View {
     @Binding var text: String
     let placeholder: String
+    var icon: String? = nil
     
     var body: some View {
-        TextField(
-            text,
-            text: $text,
-            prompt: Text(placeholder)
-                .foregroundStyle(.gray200)
-        )
+        HStack(alignment: .center, spacing: 10) {
+            TextField(
+                text,
+                text: $text,
+                prompt: Text(placeholder)
+                    .foregroundStyle(.gray200)
+            )
+            
+            if let icon {
+                Image(icon)
+                    .resizable()
+                    .frame(width: 24, height: 24)
+            }
+        }
         .textInputAutocapitalization(.never)
         .autocorrectionDisabled()
         .padding(16)
