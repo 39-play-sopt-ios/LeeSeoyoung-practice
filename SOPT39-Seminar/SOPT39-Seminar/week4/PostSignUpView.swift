@@ -15,81 +15,51 @@ struct PostSignUpView: View {
     @State private var errorMessage = ""
     
     var body: some View {
-        VStack(alignment: .center, spacing: 20) {
-            TextField(
-                "part",
-                text: $part,
-                prompt: Text("web / ios / android")
-                    .foregroundStyle(.gray200)
-            )
-            .textInputAutocapitalization(.never)
-            .autocorrectionDisabled()
-            .padding(16)
-            .frame(maxWidth: .infinity)
-            .clipShape(
-                RoundedRectangle(cornerRadius: 12)
-            )
-            .overlay {
-                RoundedRectangle(cornerRadius: 12)
-                    .stroke(.gray200, lineWidth: 2)
-            }
-            .padding(.horizontal, 24)
-            
-            TextField(
-                "name",
-                text: $name,
-                prompt: Text("이름을 입력해주세요")
-                    .foregroundStyle(.gray200)
-            )
-            .textInputAutocapitalization(.never)
-            .autocorrectionDisabled()
-            .padding(16)
-            .frame(maxWidth: .infinity)
-            .clipShape(
-                RoundedRectangle(cornerRadius: 12)
-            )
-            .overlay {
-                RoundedRectangle(cornerRadius: 12)
-                    .stroke(.gray200, lineWidth: 2)
-            }
-            .padding(.horizontal, 24)
-            
-            Button {
-                Task {
-                    await signupButtonDidTap()
+        NavigationStack {
+            VStack(alignment: .center, spacing: 28) {
+                VStack(alignment: .center, spacing: 20) {
+                    CustomInputField(text: $part, placeholder: "web / ios / android")
+                    
+                    CustomInputField(text: $name, placeholder: "이름을 입력해주세요")
                 }
-            } label: {
-                Text(isLoading ? "발급 중…" : "코드 발급")
-                    .foregroundStyle(.white)
-                    .padding(.vertical, 16)
-                    .frame(maxWidth: .infinity)
-                    .background(.black)
-                    .cornerRadius(12)
-                    .padding(.horizontal, 24)
-            }
-            .padding(.top, 8)
-            
-            Spacer()
-            
-            if !authorizationCode.isEmpty {
-                VStack(alignment: .leading, spacing: 8) {
-                    Text("발급받은 인증 코드")
-                        .font(.subhead3)
-                    Text(authorizationCode)
-                        .font(.head1)
-                        .textSelection(.enabled)
+                
+                Button {
+                    Task {
+                        await signupButtonDidTap()
+                    }
+                } label: {
+                    PrimaryButtonLabel(text: isLoading ? "발급 중…" : "코드 발급")
                 }
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(44)
+                
+                NavigationLink {
+                    PostListView()
+                } label: {
+                    PrimaryButtonLabel(text: "게시글 이동")
+                }
+                
+                Spacer()
+                
+                if !authorizationCode.isEmpty {
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("발급받은 인증 코드")
+                            .font(.subhead3)
+                        Text(authorizationCode)
+                            .font(.head1)
+                            .textSelection(.enabled)
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(20)
+                }
+                
+                if !errorMessage.isEmpty {
+                    Text(errorMessage)
+                        .foregroundStyle(.red)
+                        .padding(.vertical, 24)
+                }
             }
-
-            if !errorMessage.isEmpty {
-                Text(errorMessage)
-                    .foregroundStyle(.red)
-                    .padding(24)
-            }
+            .padding(.top, 130)
+            .padding(.horizontal, 24)
         }
-        .padding(.top, 130)
     }
     
     private func signupButtonDidTap() async {
