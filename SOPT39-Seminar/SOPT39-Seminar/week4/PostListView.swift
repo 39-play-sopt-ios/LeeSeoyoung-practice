@@ -14,33 +14,50 @@ struct PostListView: View {
     @State private var searchText = ""
     
     var body: some View {
-        VStack(alignment: .center, spacing: 0) {
-            CustomInputField(text: $searchText, placeholder: "검색어를 입력하세요", icon: "Search")
-                .padding(.vertical, 12)
+        ZStack(alignment: .bottomTrailing) {
+            VStack(alignment: .center, spacing: 0) {
+                CustomInputField(text: $searchText, placeholder: "검색어를 입력하세요", icon: "Search")
+                    .padding(.vertical, 12)
+                
+                List(posts, id: \.id) { post in
+                    PostListRow(
+                        title: post.title,
+                        content: post.content,
+                        author: post.author,
+                        createdAt: post.createdAt
+                    )
+                    .listRowSeparator(.hidden)
+                    .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 0))
+                }
+                .listStyle(.plain)
+                .listRowSpacing(12)
+                .task {
+                    await fetchPosts()
+                }
+                
+                if let errorMessage {
+                    Text(errorMessage)
+                        .foregroundStyle(.red)
+                        .padding()
+                }
+            }
+            .padding(.horizontal, 16)
             
-            List(posts, id: \.id) { post in
-                PostListRow(
-                    title: post.title,
-                    content: post.content,
-                    author: post.author,
-                    createdAt: post.createdAt
-                )
-                .listRowSeparator(.hidden)
-                .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 0))
+            Button {
+                // create
+            } label: {
+                ZStack(alignment: .center) {
+                    Circle()
+                        .fill(.customRed)
+                        .frame(width: 60, height: 60)
+                    
+                    Image(.plus)
+                        .frame(width: 28, height: 28)
+                }
+                .shadow(color: .black.opacity(0.15), radius: 12, x: 0, y: 4)
             }
-            .listStyle(.plain)
-            .listRowSpacing(12)
-            .task {
-                await fetchPosts()
-            }
-
-            if let errorMessage {
-                Text(errorMessage)
-                    .foregroundStyle(.red)
-                    .padding()
-            }
+            .padding(16)
         }
-        .padding(.horizontal, 16)
     }
     
     private func fetchPosts() async {
