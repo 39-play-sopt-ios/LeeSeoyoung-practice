@@ -16,8 +16,10 @@ struct PostListView: View {
                 .padding(.horizontal, 16)
             
             List {
-                
+                PostListRow()
+                    .listRowSeparator(.hidden)
             }
+            .listStyle(.plain)
         }
     }
 }
