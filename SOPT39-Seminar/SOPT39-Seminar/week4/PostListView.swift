@@ -12,6 +12,7 @@ struct PostListView: View {
     @State private var errorMessage: String?
     
     @State private var searchText = ""
+    @State private var showSheet = false
     
     var body: some View {
         ZStack(alignment: .bottomTrailing) {
@@ -44,7 +45,7 @@ struct PostListView: View {
             .padding(.horizontal, 16)
             
             Button {
-                // create
+                showSheet = true
             } label: {
                 ZStack(alignment: .center) {
                     Circle()
@@ -57,6 +58,10 @@ struct PostListView: View {
                 .shadow(color: .black.opacity(0.15), radius: 12, x: 0, y: 4)
             }
             .padding(16)
+            .sheet(isPresented: $showSheet) {
+                PostCreateBottomSheet()
+                    .presentationDetents([.fraction(0.4)])
+            }
         }
     }
     

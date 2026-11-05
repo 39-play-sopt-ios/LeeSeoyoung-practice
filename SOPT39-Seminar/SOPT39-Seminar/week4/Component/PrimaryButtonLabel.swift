@@ -16,6 +16,6 @@ struct PrimaryButtonLabel: View {
             .padding(.vertical, 16)
             .frame(maxWidth: .infinity)
             .background(.black)
-            .cornerRadius(12)
+            .clipShape(.capsule)
     }
 }
