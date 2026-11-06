@@ -32,7 +32,7 @@ struct PostSignUpView: View {
                 }
                 
                 NavigationLink {
-                    PostListView()
+                    PostListView(author: name, authorizationCode: authorizationCode)
                 } label: {
                     PrimaryButtonLabel(text: "게시글 이동")
                 }

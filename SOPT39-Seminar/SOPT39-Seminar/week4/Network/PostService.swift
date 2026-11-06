@@ -51,4 +51,31 @@ final class PostService {
             throw NetworkError.responseDecodingError
         }
     }
+    
+    func createPost(title: String, content: String, author: String, authorizationCode: String) async throws -> PostResponseDTO {
+        let dto = PostCreateRequestDTO(
+            title: title,
+            content: content,
+            author: author
+        )
+        let body = try JSONEncoder().encode(dto)
+        var request = try makeRequest(body: body, method: "POST")
+        request.setValue(authorizationCode, forHTTPHeaderField: "Authorization")
+        
+        let (data, response) = try await URLSession.shared.data(for: request)
+        
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw NetworkError.responseError
+        }
+        
+        guard (200..<300).contains(httpResponse.statusCode) else {
+            throw NetworkError(statusCode: httpResponse.statusCode)
+        }
+        
+        do {
+            return try JSONDecoder().decode(PostResponseDTO.self, from: data)
+        } catch {
+            throw NetworkError.responseDecodingError
+        }
+    }
 }

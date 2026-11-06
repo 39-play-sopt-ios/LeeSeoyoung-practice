@@ -11,6 +11,14 @@ struct PostCreateBottomSheet: View {
     @State private var title = ""
     @State private var content = ""
     
+    let author: String
+    let authorizationCode: String
+    
+    @State private var isLoading = false
+    @State private var errorMessage = ""
+    
+    @Environment(\.dismiss) private var dismiss
+    
     var body: some View {
         ZStack {
             Color(.white)
@@ -35,7 +43,9 @@ struct PostCreateBottomSheet: View {
                 }
                 
                 Button {
-                    // create
+                    Task {
+                        await postButtonDidTap()
+                    }
                 } label: {
                     PrimaryButtonLabel(
                         text: "완료",
@@ -59,8 +69,28 @@ struct PostCreateBottomSheet: View {
         && title.count <= 20
         && content.count <= 100
     }
-}
-
-#Preview {
-    PostCreateBottomSheet()
+    
+    private func postButtonDidTap() async {
+        guard !isLoading else { return }
+        
+        isLoading = true
+        errorMessage = ""
+        defer { isLoading = false }
+        
+        do {
+            let _ = try await PostService.shared.createPost(
+                title: title,
+                content: content,
+                author: author,
+                authorizationCode: authorizationCode
+            )
+            try Task.checkCancellation()
+            dismiss()
+            
+        } catch is CancellationError {
+            // 취소는 사용자에게 요청 실패로 표시하지 않는다
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+    }
 }

@@ -8,6 +8,9 @@
 import SwiftUI
 
 struct PostListView: View {
+    let author: String
+    let authorizationCode: String
+    
     @State private var posts: [PostListResponseDTO.PostData] = []
     @State private var errorMessage: String?
     
@@ -58,8 +61,12 @@ struct PostListView: View {
                 .shadow(color: .black.opacity(0.15), radius: 12, x: 0, y: 4)
             }
             .padding(16)
-            .sheet(isPresented: $showSheet) {
-                PostCreateBottomSheet()
+            .sheet(isPresented: $showSheet, onDismiss: {
+                Task {
+                    await fetchPosts()
+                }
+            }) {
+                PostCreateBottomSheet(author: author, authorizationCode: authorizationCode)
                     .presentationDetents([.fraction(0.4)])
             }
         }
@@ -75,8 +82,4 @@ struct PostListView: View {
             errorMessage = error.localizedDescription
         }
     }
-}
-
-#Preview {
-    PostListView()
 }
