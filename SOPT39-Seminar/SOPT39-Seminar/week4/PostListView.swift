@@ -17,6 +17,9 @@ struct PostListView: View {
     @State private var searchText = ""
     @State private var showSheet = false
     
+    @State private var selectedPost: PostListResponseDTO.PostData?
+    @State private var showDeleteModal = false
+    
     var body: some View {
         ZStack(alignment: .bottomTrailing) {
             VStack(alignment: .center, spacing: 0) {
@@ -32,6 +35,10 @@ struct PostListView: View {
                     )
                     .listRowSeparator(.hidden)
                     .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 0))
+                    .onLongPressGesture {
+                        selectedPost = post
+                        showDeleteModal = true
+                    }
                 }
                 .listStyle(.plain)
                 .listRowSpacing(12)
@@ -68,6 +75,26 @@ struct PostListView: View {
             }) {
                 PostCreateBottomSheet(author: author, authorizationCode: authorizationCode)
                     .presentationDetents([.fraction(0.4)])
+            }
+            
+            if showDeleteModal, let selectedPost {
+                ZStack {
+                    Color.black.opacity(0.4)
+                        .ignoresSafeArea()
+                        .onTapGesture {
+                            showDeleteModal = false
+                        }
+                    
+                    DeletePostModal {
+                        showDeleteModal = false
+                    } onDelete: {
+                        
+                        showDeleteModal = false
+                    }
+                    .padding(36)
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .zIndex(1)
             }
         }
     }
