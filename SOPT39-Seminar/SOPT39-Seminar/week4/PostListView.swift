@@ -12,13 +12,13 @@ struct PostListView: View {
     let authorizationCode: String
     
     @State private var posts: [PostListResponseDTO.PostData] = []
-    @State private var errorMessage: String?
     
     @State private var searchText = ""
     @State private var showSheet = false
     
     @State private var selectedPost: PostListResponseDTO.PostData?
     @State private var showDeleteModal = false
+    @State private var toastMessage: String?
     
     var body: some View {
         ZStack(alignment: .bottomTrailing) {
@@ -44,12 +44,6 @@ struct PostListView: View {
                 .listRowSpacing(12)
                 .task {
                     await fetchPosts()
-                }
-                
-                if let errorMessage {
-                    Text(errorMessage)
-                        .foregroundStyle(.red)
-                        .padding()
                 }
             }
             .padding(.horizontal, 16)
@@ -103,6 +97,11 @@ struct PostListView: View {
                 .zIndex(1)
             }
         }
+        .overlay(alignment: .top) {
+            if let toastMessage {
+                ToastAlert(message: toastMessage)
+            }
+        }
     }
     
     private func fetchPosts() async {
@@ -112,7 +111,7 @@ struct PostListView: View {
         } catch is CancellationError {
             // 화면을 벗어나 요청이 취소된 경우
         } catch {
-            errorMessage = error.localizedDescription
+            showToast(error.localizedDescription)
         }
     }
     
@@ -122,7 +121,20 @@ struct PostListView: View {
         } catch is CancellationError {
             // 화면을 벗어나 요청이 취소된 경우
         } catch {
-            errorMessage = error.localizedDescription
+            showToast(error.localizedDescription)
+        }
+    }
+    
+    private func showToast(_ message: String) {
+        withAnimation {
+            toastMessage = message
+        }
+        
+        Task {
+            try? await Task.sleep(nanoseconds: 2_000_000_000)
+            withAnimation {
+                toastMessage = nil
+            }
         }
     }
 }

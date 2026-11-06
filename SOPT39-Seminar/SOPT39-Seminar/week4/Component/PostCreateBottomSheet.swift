@@ -15,7 +15,7 @@ struct PostCreateBottomSheet: View {
     let authorizationCode: String
     
     @State private var isLoading = false
-    @State private var errorMessage = ""
+    @State private var toastMessage: String?
     
     @Environment(\.dismiss) private var dismiss
     
@@ -58,6 +58,11 @@ struct PostCreateBottomSheet: View {
             .padding(16)
         }
         .ignoresSafeArea()
+        .overlay(alignment: .top) {
+            if let toastMessage {
+                ToastAlert(message: toastMessage)
+            }
+        }
     }
     
     private var isFormValid: Bool {
@@ -74,7 +79,6 @@ struct PostCreateBottomSheet: View {
         guard !isLoading else { return }
         
         isLoading = true
-        errorMessage = ""
         defer { isLoading = false }
         
         do {
@@ -90,7 +94,20 @@ struct PostCreateBottomSheet: View {
         } catch is CancellationError {
             // 취소는 사용자에게 요청 실패로 표시하지 않는다
         } catch {
-            errorMessage = error.localizedDescription
+            showToast(error.localizedDescription)
+        }
+    }
+    
+    private func showToast(_ message: String) {
+        withAnimation {
+            toastMessage = message
+        }
+
+        Task {
+            try? await Task.sleep(nanoseconds: 2_000_000_000)
+            withAnimation {
+                toastMessage = nil
+            }
         }
     }
 }
