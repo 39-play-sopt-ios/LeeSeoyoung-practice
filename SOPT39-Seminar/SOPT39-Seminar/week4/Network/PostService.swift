@@ -15,7 +15,8 @@ final class PostService {
     private func makeRequest(
         body: Data? = nil,
         method: String,
-        postID: Int64? = nil
+        postID: Int64? = nil,
+        queryItems: [URLQueryItem] = []
     ) throws -> URLRequest {
         guard let baseURL = Bundle.main.object(forInfoDictionaryKey: "BASE_URL") as? String,
               let url = URL(string: baseURL) else {
@@ -23,9 +24,22 @@ final class PostService {
         }
         
         let path = postID.map { "/api/v1/posts/\($0)" } ?? "/api/v1/posts"
-        var request = URLRequest(
-            url: url.appending(path: path)
-        )
+        var endpointURL = url.appending(path: path)
+        
+        guard var components = URLComponents(
+            url: endpointURL,
+            resolvingAgainstBaseURL: false
+        ) else {
+            throw NetworkError.urlError
+        }
+        
+        components.queryItems = queryItems.isEmpty ? nil : queryItems
+        
+        guard let requestURL = components.url else {
+            throw NetworkError.urlError
+        }
+        
+        var request = URLRequest(url: requestURL)
         request.httpMethod = method
         request.httpBody = body
         
@@ -36,8 +50,10 @@ final class PostService {
         return request
     }
     
-    func fetchPosts() async throws -> PostListResponseDTO {
-        let request = try makeRequest(method: "GET")
+    func fetchPosts(keyword: String) async throws -> PostListResponseDTO {
+        let queryItems = keyword.isEmpty ? [] : [URLQueryItem(name: "keyword", value: keyword)]
+        
+        let request = try makeRequest(method: "GET", queryItems: queryItems)
         
         let (data, response) = try await URLSession.shared.data(for: request)
         

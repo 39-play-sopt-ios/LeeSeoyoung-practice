@@ -42,8 +42,21 @@ struct PostListView: View {
                 }
                 .listStyle(.plain)
                 .listRowSpacing(12)
-                .task {
-                    await fetchPosts()
+                .task(id: searchText) {
+                    let keyword = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
+
+                    guard keyword.isEmpty || (2...50).contains(keyword.count) else {
+                        return
+                    }
+                    
+                    do {
+                        try await Task.sleep(nanoseconds: 300_000_000)
+                        await fetchPosts(keyword: keyword)
+                    } catch is CancellationError {
+                        // 입력이 다시 바뀌어 이전 대기 작업이 취소된 경우
+                    } catch {
+                        showToast(error.localizedDescription)
+                    }
                 }
             }
             .padding(.horizontal, 16)
@@ -64,7 +77,7 @@ struct PostListView: View {
             .padding(16)
             .sheet(isPresented: $showSheet, onDismiss: {
                 Task {
-                    await fetchPosts()
+                    await fetchPosts(keyword: searchText)
                 }
             }) {
                 PostCreateBottomSheet(author: author, authorizationCode: authorizationCode)
@@ -82,12 +95,12 @@ struct PostListView: View {
                     DeletePostModal {
                         showDeleteModal = false
                         Task {
-                            await fetchPosts()
+                            await fetchPosts(keyword: searchText)
                         }
                     } onDelete: {
                         Task {
                             await deletePost(id: selectedPost.id)
-                            await fetchPosts()
+                            await fetchPosts(keyword: searchText)
                         }
                         showDeleteModal = false
                     }
@@ -104,9 +117,10 @@ struct PostListView: View {
         }
     }
     
-    private func fetchPosts() async {
+    private func fetchPosts(keyword: String) async {
         do {
-            let response = try await PostService.shared.fetchPosts()
+            let response = try await PostService.shared.fetchPosts(keyword: keyword)
+            try Task.checkCancellation()
             posts = response.data?.posts ?? []
         } catch is CancellationError {
             // 화면을 벗어나 요청이 취소된 경우
