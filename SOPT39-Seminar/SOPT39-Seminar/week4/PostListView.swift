@@ -35,6 +35,7 @@ struct PostListView: View {
     @State private var hasNext = true
     @State private var isLoadingPage = false
     @State private var isDeletingPost = false
+    @State private var hasLoadedPosts = false
     
     var body: some View {
         ZStack(alignment: .bottomTrailing) {
@@ -70,6 +71,16 @@ struct PostListView: View {
                 }
                 .listStyle(.plain)
                 .listRowSpacing(12)
+                .overlay {
+                    if hasLoadedPosts
+                        && posts.isEmpty
+                        && !isLoadingPage
+                        && !searchText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                        Text("검색 결과가 없습니다.")
+                            .foregroundStyle(.gray300)
+                            .allowsHitTesting(false)
+                    }
+                }
                 .task(id: searchText) {
                     let keyword = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
 
@@ -172,6 +183,9 @@ struct PostListView: View {
         guard isNewSearch || hasNext else { return }
 
         isLoadingPage = true
+        if isNewSearch {
+            hasLoadedPosts = false
+        }
         defer { isLoadingPage = false }
 
         do {
@@ -193,6 +207,7 @@ struct PostListView: View {
 
             nextCursor = page?.nextCursor
             hasNext = page?.hasNext ?? false
+            hasLoadedPosts = true
         } catch is CancellationError {
             // 취소된 요청은 무시
         } catch {
