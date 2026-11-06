@@ -8,14 +8,28 @@
 import SwiftUI
 
 struct PostListView: View {
+    private enum PostSheet: Identifiable {
+        case create
+        case edit(PostListResponseDTO.PostData)
+        
+        var id: String {
+            switch self {
+            case .create:
+                return "create"
+            case .edit(let post):
+                return "edit-\(post.id ?? 0)"
+            }
+        }
+    }
+    
+    
     let author: String
     let authorizationCode: String
     
     @State private var posts: [PostListResponseDTO.PostData] = []
     
     @State private var searchText = ""
-    @State private var showSheet = false
-    
+    @State private var activeSheet: PostSheet?
     @State private var selectedPost: PostListResponseDTO.PostData?
     @State private var showDeleteModal = false
     @State private var toastMessage: String?
@@ -38,6 +52,10 @@ struct PostListView: View {
                     .onLongPressGesture {
                         selectedPost = post
                         showDeleteModal = true
+                    }
+                    .onTapGesture {
+                        selectedPost = post
+                        activeSheet = .edit(post)
                     }
                 }
                 .listStyle(.plain)
@@ -62,7 +80,7 @@ struct PostListView: View {
             .padding(.horizontal, 16)
             
             Button {
-                showSheet = true
+                activeSheet = .create
             } label: {
                 ZStack(alignment: .center) {
                     Circle()
@@ -75,13 +93,19 @@ struct PostListView: View {
                 .shadow(color: .black.opacity(0.15), radius: 12, x: 0, y: 4)
             }
             .padding(16)
-            .sheet(isPresented: $showSheet, onDismiss: {
+            .sheet(item: $activeSheet, onDismiss: {
                 Task {
                     await fetchPosts(keyword: searchText)
                 }
-            }) {
-                PostCreateBottomSheet(author: author, authorizationCode: authorizationCode)
-                    .presentationDetents([.fraction(0.4)])
+            }) { sheet in
+                switch sheet {
+                case .create:
+                    PostBottomSheet(mode: .create, author: author, authorizationCode: authorizationCode)
+                        .presentationDetents([.fraction(0.4)])
+                case .edit(let post):
+                    PostBottomSheet(mode: .edit(post), author: author, authorizationCode: authorizationCode)
+                        .presentationDetents([.fraction(0.4)])
+                }
             }
             
             if showDeleteModal, let selectedPost {
