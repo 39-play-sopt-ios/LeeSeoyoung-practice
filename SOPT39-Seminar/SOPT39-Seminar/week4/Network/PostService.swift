@@ -14,20 +14,24 @@ final class PostService {
     
     private func makeRequest(
         body: Data? = nil,
-        method: String
+        method: String,
+        postID: Int64? = nil
     ) throws -> URLRequest {
         guard let baseURL = Bundle.main.object(forInfoDictionaryKey: "BASE_URL") as? String,
               let url = URL(string: baseURL) else {
             throw NetworkError.urlError
         }
         
+        let path = postID.map { "/api/v1/posts/\($0)" } ?? "/api/v1/posts"
         var request = URLRequest(
-            url: url.appending(path: "/api/v1/posts")
+            url: url.appending(path: path)
         )
         request.httpMethod = method
-        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        
         request.httpBody = body
+        
+        if body != nil {
+            request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        }
         
         return request
     }
@@ -74,6 +78,27 @@ final class PostService {
         
         do {
             return try JSONDecoder().decode(PostResponseDTO.self, from: data)
+        } catch {
+            throw NetworkError.responseDecodingError
+        }
+    }
+    
+    func deletePost(id: Int64?, authorizationCode: String) async throws -> PostDeleteResponseDTO {
+        var request = try makeRequest(method: "DELETE", postID: id)
+        request.setValue(authorizationCode, forHTTPHeaderField: "Authorization")
+        
+        let (data, response) = try await URLSession.shared.data(for: request)
+        
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw NetworkError.responseError
+        }
+        
+        guard (200..<300).contains(httpResponse.statusCode) else {
+            throw NetworkError(statusCode: httpResponse.statusCode)
+        }
+        
+        do {
+            return try JSONDecoder().decode(PostDeleteResponseDTO.self, from: data)
         } catch {
             throw NetworkError.responseDecodingError
         }

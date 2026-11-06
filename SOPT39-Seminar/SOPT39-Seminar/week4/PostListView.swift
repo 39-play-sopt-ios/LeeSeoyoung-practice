@@ -87,8 +87,14 @@ struct PostListView: View {
                     
                     DeletePostModal {
                         showDeleteModal = false
+                        Task {
+                            await fetchPosts()
+                        }
                     } onDelete: {
-                        
+                        Task {
+                            await deletePost(id: selectedPost.id)
+                            await fetchPosts()
+                        }
                         showDeleteModal = false
                     }
                     .padding(36)
@@ -103,6 +109,16 @@ struct PostListView: View {
         do {
             let response = try await PostService.shared.fetchPosts()
             posts = response.data?.posts ?? []
+        } catch is CancellationError {
+            // 화면을 벗어나 요청이 취소된 경우
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+    }
+    
+    private func deletePost(id: Int64?) async {
+        do {
+            let response = try await PostService.shared.deletePost(id: id, authorizationCode: authorizationCode)
         } catch is CancellationError {
             // 화면을 벗어나 요청이 취소된 경우
         } catch {
