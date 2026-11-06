@@ -50,8 +50,22 @@ final class PostService {
         return request
     }
     
-    func fetchPosts(keyword: String) async throws -> PostListResponseDTO {
-        let queryItems = keyword.isEmpty ? [] : [URLQueryItem(name: "keyword", value: keyword)]
+    func fetchPosts(keyword: String, cursor: Int64?, size: Int = 10) async throws -> PostListResponseDTO {
+        var queryItems = [
+            URLQueryItem(name: "size", value: "\(size)")
+        ]
+        
+        if let cursor {
+            queryItems.append(
+                URLQueryItem(name: "cursor", value: "\(cursor)")
+            )
+        }
+        
+        if !keyword.isEmpty {
+            queryItems.append(
+                URLQueryItem(name: "keyword", value: keyword)
+            )
+        }
         
         let request = try makeRequest(method: "GET", queryItems: queryItems)
         

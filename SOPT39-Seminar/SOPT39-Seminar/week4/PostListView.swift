@@ -22,17 +22,19 @@ struct PostListView: View {
         }
     }
     
-    
     let author: String
     let authorizationCode: String
     
     @State private var posts: [PostListResponseDTO.PostData] = []
-    
     @State private var searchText = ""
     @State private var activeSheet: PostSheet?
     @State private var selectedPost: PostListResponseDTO.PostData?
     @State private var showDeleteModal = false
     @State private var toastMessage: String?
+    @State private var nextCursor: Int64?
+    @State private var hasNext = true
+    @State private var isLoadingPage = false
+    @State private var isDeletingPost = false
     
     var body: some View {
         ZStack(alignment: .bottomTrailing) {
@@ -57,6 +59,14 @@ struct PostListView: View {
                         selectedPost = post
                         activeSheet = .edit(post)
                     }
+                    .onAppear {
+                        guard post.id == posts.last?.id else { return }
+
+                        Task {
+                            let keyword = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
+                            await fetchPage(keyword: keyword)
+                        }
+                    }
                 }
                 .listStyle(.plain)
                 .listRowSpacing(12)
@@ -69,7 +79,7 @@ struct PostListView: View {
                     
                     do {
                         try await Task.sleep(nanoseconds: 300_000_000)
-                        await fetchPosts(keyword: keyword)
+                        await fetchPage(keyword: keyword, isNewSearch: true)
                     } catch is CancellationError {
                         // 입력이 다시 바뀌어 이전 대기 작업이 취소된 경우
                     } catch {
@@ -95,7 +105,7 @@ struct PostListView: View {
             .padding(16)
             .sheet(item: $activeSheet, onDismiss: {
                 Task {
-                    await fetchPosts(keyword: searchText)
+                    await fetchPage(keyword: searchText, isNewSearch: true)
                 }
             }) { sheet in
                 switch sheet {
@@ -116,18 +126,16 @@ struct PostListView: View {
                             showDeleteModal = false
                         }
                     
-                    DeletePostModal {
+                    DeletePostModal(onCancel: {
                         showDeleteModal = false
+                    }, onDelete: {
                         Task {
-                            await fetchPosts(keyword: searchText)
+                            guard await deletePost(id: selectedPost.id) else { return }
+                            showDeleteModal = false
+                            let keyword = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
+                            await fetchPage(keyword: keyword, isNewSearch: true)
                         }
-                    } onDelete: {
-                        Task {
-                            await deletePost(id: selectedPost.id)
-                            await fetchPosts(keyword: searchText)
-                        }
-                        showDeleteModal = false
-                    }
+                    }, isDeleting: isDeletingPost)
                     .padding(36)
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -141,23 +149,52 @@ struct PostListView: View {
         }
     }
     
-    private func fetchPosts(keyword: String) async {
+    private func deletePost(id: Int64?) async -> Bool {
+        guard !isDeletingPost else { return false }
+
+        isDeletingPost = true
+        defer { isDeletingPost = false }
+
         do {
-            let response = try await PostService.shared.fetchPosts(keyword: keyword)
-            try Task.checkCancellation()
-            posts = response.data?.posts ?? []
+            _ = try await PostService.shared.deletePost(id: id, authorizationCode: authorizationCode)
+            return true
         } catch is CancellationError {
             // 화면을 벗어나 요청이 취소된 경우
+            return false
         } catch {
             showToast(error.localizedDescription)
+            return false
         }
     }
     
-    private func deletePost(id: Int64?) async {
+    private func fetchPage(keyword: String, isNewSearch: Bool = false) async {
+        guard !isLoadingPage else { return }
+        guard isNewSearch || hasNext else { return }
+
+        isLoadingPage = true
+        defer { isLoadingPage = false }
+
         do {
-            let response = try await PostService.shared.deletePost(id: id, authorizationCode: authorizationCode)
+            let cursor = isNewSearch ? nil : nextCursor
+            let response = try await PostService.shared.fetchPosts(
+                keyword: keyword,
+                cursor: cursor
+            )
+            try Task.checkCancellation()
+
+            let page = response.data
+            let newPosts = page?.posts ?? []
+
+            if isNewSearch {
+                posts = newPosts
+            } else {
+                posts.append(contentsOf: newPosts)
+            }
+
+            nextCursor = page?.nextCursor
+            hasNext = page?.hasNext ?? false
         } catch is CancellationError {
-            // 화면을 벗어나 요청이 취소된 경우
+            // 취소된 요청은 무시
         } catch {
             showToast(error.localizedDescription)
         }
