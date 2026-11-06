@@ -37,12 +37,27 @@ struct PostCreateBottomSheet: View {
                 Button {
                     // create
                 } label: {
-                    PrimaryButtonLabel(text: "완료")
+                    PrimaryButtonLabel(
+                        text: "완료",
+                        foregroundColor: isFormValid ? .white : .gray300,
+                        backgroundColor: isFormValid ? .black : .gray100
+                    )
                 }
+                .disabled(!isFormValid)
             }
             .padding(16)
         }
         .ignoresSafeArea()
+    }
+    
+    private var isFormValid: Bool {
+        let trimmedTitle = title.trimmingCharacters(in: .whitespacesAndNewlines)
+        let trimmedContent = content.trimmingCharacters(in: .whitespacesAndNewlines)
+        
+        return !trimmedTitle.isEmpty
+        && !trimmedContent.isEmpty
+        && title.count <= 20
+        && content.count <= 100
     }
 }
 

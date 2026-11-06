@@ -9,13 +9,15 @@ import SwiftUI
 
 struct PrimaryButtonLabel: View {
     let text: String
+    var foregroundColor: Color = .white
+    var backgroundColor: Color = .black
     
     var body: some View {
         Text(text)
-            .foregroundStyle(.white)
+            .foregroundStyle(foregroundColor)
             .padding(.vertical, 16)
             .frame(maxWidth: .infinity)
-            .background(.black)
+            .background(backgroundColor)
             .clipShape(.capsule)
     }
 }
