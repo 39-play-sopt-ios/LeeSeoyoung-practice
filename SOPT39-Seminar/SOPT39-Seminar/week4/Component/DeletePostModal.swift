@@ -10,6 +10,7 @@ import SwiftUI
 struct DeletePostModal: View {
     let onCancel: () -> Void
     let onDelete: () -> Void
+    let isDeleting: Bool
     
     var body: some View {
         VStack(alignment: .center, spacing: 20) {
@@ -26,12 +27,14 @@ struct DeletePostModal: View {
                         backgroundColor: .gray100
                     )
                 }
+                .disabled(isDeleting)
                 
                 Button {
                     onDelete()
                 } label: {
-                    PrimaryButtonLabel(text: "삭제")
+                    PrimaryButtonLabel(text: isDeleting ? "삭제 중..." : "삭제")
                 }
+                .disabled(isDeleting)
             }
         }
         .padding(20)
